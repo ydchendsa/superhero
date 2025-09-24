@@ -1,0 +1,58 @@
+---
+title: "Yudi_Chen_Superhero"
+output: html_document
+---
+```{r}
+library(dplyr)
+library(snakecase)
+```
+
+```{r}
+information = read.csv("heroes_information.csv",header=TRUE)
+powers = read.csv("superheroes_power_matrix.csv",header=TRUE)
+stats = read.csv("superheroes_stats.csv",header=TRUE)
+```
+
+join tables
+```{r}
+superhero = merge(information,powers,by.x=c("name"),by.y=c("Name"))
+superhero = merge(superhero,stats,by.x=c("name"),by.y=c("Name"))
+superhero = na.omit(superhero)
+superhero = superhero[superhero$Publisher=="Marvel Comics" | superhero$Publisher =="DC Comics",]
+
+```
+
+```{r}
+list <- list()
+for (i in 1:186){
+  if (length(which(superhero[i]=="True"))>=1 && length(which(superhero[i]=="True"))<=30){
+    list <- append(list,colnames(superhero[i]))
+  }
+}
+
+list2 = list()
+for (i in 1:64){
+  if(length(which(superhero[i]=="False"))>=1 &&
+     length(which(superhero[i]=="False"))<=30){
+       list2 <- append(list2, colnames(superhero[i]))
+     }
+}
+
+superhero = superhero[,-which(names(superhero) %in% list)]
+
+list3 = list("X","Skin.color","Alignment.x","Durability.x","Intelligence.x")
+superhero = superhero[,-which(names(superhero) %in% list3)]
+
+colnames(superhero) = to_snake_case(colnames(superhero), sep_out = "_")
+superhero = rename(superhero,durability=durability_y)
+superhero = rename(superhero,alignment=alignment_y)
+superhero = rename(superhero,intelligence=intelligence_y)
+superhero[superhero == '-'] <- 'not identified'
+```
+
+```{r}
+write.csv(superhero,"superhero_cleaned.csv")
+```
+
+
+

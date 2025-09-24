@@ -1,0 +1,375 @@
+---
+title: "Yudi_Chen_Regression"
+author: "Yudi Chen"
+date: "4/21/2022"
+output: html_document
+---
+```{r}
+library(leaps)
+library(MASS)
+library(dplyr)
+library(caTools)
+library(caret)
+```
+
+```{r}
+superhero = read.csv("superhero_cleaned2.csv")
+superhero = subset(superhero,select=-c(1,2))
+```
+
+## Regression: Good or bad
+```{r}
+## train test split
+set.seed(1000)
+good <- superhero[superhero$alignment=="good",]
+bad <- superhero[superhero$alignment=="bad",]
+#neutral <- superhero[superhero$alignment=="neutral",]
+
+good_sample <- sample.split(good$alignment,SplitRatio = 0.7)
+bad_sample <- sample.split(bad$alignment,SplitRatio = 0.7)
+#neutral_sample <- sample.split(neutral$alignment,SplitRatio = 0.7)
+
+good_train = subset(good,good_sample==TRUE)
+bad_train = subset(bad,bad_sample==TRUE)
+#neutral_train = subset(neutral,neutral_sample==TRUE)
+
+good_test = subset(good,good_sample==FALSE)
+bad_test = subset(bad,bad_sample==FALSE)
+#neutral_test = subset(neutral,neutral_sample==FALSE)
+
+train = rbind(good_train,bad_train)#,neutral_train)
+test = rbind(good_test,bad_test)#,neutral_test)
+
+train %>% mutate_if(is.character,~as.factor(.))
+test %>% mutate_if(is.character,~as.factor(.))
+lapply(train,unique)
+list1 = list("omniscient","omnipresent","the_force","melting","intuitive_aptitude","spatial_awareness","changing_armor","thirstokinesis","hyperkinesis")
+train = train[,-which(names(train) %in% list1)]
+test = test[,-which(names(test) %in% list1)]
+```
+
+```{r}
+train <- na.omit(train)
+test <- na.omit(test)
+```
+
+```{r,warning=FALSE}
+max.model <- glm(as.factor(alignment)~., data=train,family=binomial)
+min.model <- glm(as.factor(alignment)~1,data=train,family=binomial)
+
+##forward
+forward <- step(min.model,direction='forward',scope=formula(max.model),trace=0)
+summary(forward)
+
+##backward
+backward = step(max.model,direction="backward",scope=formula(max.model),trace=0)
+summary(backward)
+```
+
+```{r}
+#model1 <- glm(as.factor(alignment)~height+weight+stamina+super_strength+intelligence+shapeshifting+energy_manipulation,data=train,family=binomial)
+model1 <- glm(as.factor(alignment) ~ gender + stealth + 
+    energy_blasts + intelligence + shapeshifting + 
+    super_strength + stamina + weight + height + jump + size_changing + 
+    energy_manipulation, family = binomial, data = train)
+summary(model1)
+
+model1.1 <- glm(as.factor(alignment) ~ gender + stealth + 
+    energy_blasts + intelligence + shapeshifting + 
+    super_strength + stamina + weight + height + jump, family = binomial, data = train)
+summary(model1.1)
+
+model1.2 <- glm(as.factor(alignment) ~ gender + stealth + 
+    energy_blasts + intelligence + shapeshifting + 
+    super_strength + weight + height + jump, family = binomial, data = train)
+summary(model1.2)
+
+model1.3 <- glm(as.factor(alignment) ~ stealth + 
+    energy_blasts + intelligence + shapeshifting + 
+    super_strength + weight + height + jump, family = binomial, data = train)
+summary(model1.3)
+```
+
+```{r}
+prediction1 = model1 %>% predict(test,type="response")
+predicted.classes1 <- ifelse(prediction1 > 0.5, "good", "bad")
+confusionMatrix(as.factor(test$alignment),as.factor(predicted.classes1))
+```
+
+```{r}
+data1 <- superhero[,c(5,7,52)]
+pairs(data1)
+```
+
+##Regression Male Female
+```{r}
+set.seed(1234)
+male <- superhero[superhero$gender=="Male",]
+female <- superhero[superhero$gender=="Female",]
+
+male_sample <- sample.split(male$gender,SplitRatio = 0.7)
+female_sample <- sample.split(female$gender,SplitRatio = 0.7)
+
+male_train = subset(male,male_sample==TRUE)
+female_train = subset(female,female_sample==TRUE)
+
+male_test = subset(male,male_sample==FALSE)
+female_test = subset(female,female_sample==FALSE)
+
+train = rbind(male_train,female_train)
+test = rbind(male_test,female_test)
+
+train %>% mutate_if(is.character,~as.factor(.))
+test %>% mutate_if(is.character,~as.factor(.))
+lapply(train,unique)
+list1 = list("omniscient","omnipresent","the_force","melting","intuitive_aptitude","spatial_awareness","changing_armor","thirstokinesis","hyperkinesis")
+train = train[,-which(names(train) %in% list1)]
+test = test[,-which(names(test) %in% list1)]
+```
+
+```{r,warning=FALSE}
+max.model <- glm(as.factor(gender)~., data=train,family=binomial)
+min.model <- glm(as.factor(gender)~1,data=train,family=binomial)
+
+##forward
+forward <- step(min.model,direction='forward',scope=formula(max.model),trace=0)
+summary(forward)
+
+##backward
+backward = step(max.model,direction="backward",scope=formula(max.model),trace=0)
+summary(backward)
+```
+
+```{r}
+model2<- glm(formula = as.factor(gender) ~
+    flight + weapons_master + teleportation + 
+    immortality + reflexes + invulnerability + 
+    energy_manipulation + 
+    toxin_and_disease_resistance + speed + durability + 
+    power, family = binomial, data = train)
+summary(model2)
+
+model2.1<- glm(formula = as.factor(gender) ~ 
+   weapons_master+ 
+    immortality + reflexes + 
+    self_sustenance + energy_manipulation + 
+    toxin_and_disease_resistance + speed + durability + 
+    power, family = binomial, data = train)
+summary(model2.1)
+
+model2.2<- glm(formula = as.factor(gender) ~ 
+   weapons_master+ 
+    immortality + reflexes + 
+    self_sustenance + energy_manipulation + 
+    toxin_and_disease_resistance + speed + durability, family = binomial, data = train)
+summary(model2.2)
+
+model2.3<- glm(formula = as.factor(gender) ~
+   weapons_master+ 
+    immortality + reflexes + 
+    self_sustenance + energy_manipulation + 
+    toxin_and_disease_resistance + durability, family = binomial, data = train)
+summary(model2.3)
+
+prediction2 = model2 %>% predict(test,type="response")
+predicted.classes2 <- ifelse(prediction2 > 0.5, "Male", "Female")
+confusionMatrix(as.factor(test$gender),as.factor(predicted.classes2))
+```
+
+```{r}
+data2 <- superhero[,c(54,55,56)]
+pairs(data2)
+```
+
+```{r}
+model2.4<- glm(formula = as.factor(gender) ~
+    flight + weapons_master + teleportation + 
+    immortality + reflexes + invulnerability + 
+    self_sustenance + energy_manipulation + 
+    toxin_and_disease_resistance + poly(speed,2) + poly(durability,3) + 
+    poly(power,2), family = binomial, data = train)
+summary(model2)
+
+prediction2.1 = model2.4 %>% predict(test,type="response")
+predicted.classes2.1 <- ifelse(prediction2.1 > 0.5, "Male", "Female")
+confusionMatrix(as.factor(test$gender),as.factor(predicted.classes2.1))
+```
+
+
+##Classification: race
+```{r}
+library(tree)
+library(caret)
+library(rpart)
+install.packages("party")
+library(party)
+```
+
+```{r}
+list = as.data.frame(table(superhero$race))
+list = list$Var1[list$Freq<=10]
+print(list)
+
+superhero1 = within(superhero, race[race %in% list] <- "Other")
+
+superhero1 <- superhero1[!names(superhero1)=="eye_color"]
+superhero1 <- superhero1[!names(superhero1)=="hair_color"]
+```
+
+
+```{r,warning=FALSE}
+set.seed(1000)
+human <- superhero1[superhero1$race=="Human",]
+ni <- superhero1[superhero1$race=="not identified",]
+mutant <- superhero1[superhero1$race=="Mutant",]
+other <- superhero1[superhero1$race=="Other",]
+
+human_sample <- sample.split(human$alignment,SplitRatio = 0.7)
+ni_sample <- sample.split(ni$alignment,SplitRatio = 0.7)
+mutant_sample <- sample.split(mutant$alignment,SplitRatio = 0.7)
+other_sample <- sample.split(other$alignment,SplitRatio = 0.7)
+
+human_train = subset(human,human_sample==TRUE)
+ni_train = subset(ni,ni_sample==TRUE)
+mutant_train = subset(mutant,mutant_sample==TRUE)
+other_train = subset(other,other_sample==TRUE)
+
+human_test = subset(human,human_sample==FALSE)
+ni_test = subset(ni,ni_sample==FALSE)
+mutant_test = subset(mutant,mutant_sample==FALSE)
+other_test = subset(other,other_sample==FALSE)
+
+train = rbind(human_train,ni_train,mutant_train,other_train)#,neutral_train)
+test = rbind(human_test,ni_test,mutant_test,other_test)#,neutral_test)
+
+train %>% mutate_if(is.character,~as.factor(.))
+test %>% mutate_if(is.character,~as.factor(.))
+```
+
+
+##clustering: race
+```{r,warning=FALSE}
+dist = dist(superhero1)
+origin =hclust(dist)
+hc1 <- cutree(origin,4)
+table(hc1,superhero1$race)
+```
+
+
+
+```{r}
+tree1 = rpart(as.factor(race)~.,train)
+summary(tree1)
+rpart.plot::rpart.plot(tree1)
+tree.prediction1=predict(tree1,test,type='class')
+confusionMatrix(as.factor(test$race),as.factor(tree.prediction1))
+```
+
+
+```{r}
+list = as.data.frame(table(superhero$race))
+list2 = list$Var1[list$Freq<=50]
+print(list2)
+
+superhero2 = within(superhero, race[race %in% list2] <- "Nonhuman")
+superhero2 <- superhero2[!names(superhero2)=="eye_color"]
+superhero2 <- superhero2[!names(superhero2)=="hair_color"]
+```
+
+```{r}
+set.seed(408)
+human <- superhero2[superhero2$race=="Human",]
+ni <- superhero2[superhero2$race=="not identified",]
+#mutant <- superhero1[superhero1$race=="Mutant",]
+nonhuman <- superhero2[superhero2$race=="Nonhuman",]
+
+human_sample <- sample.split(human$alignment,SplitRatio = 0.7)
+ni_sample <- sample.split(ni$alignment,SplitRatio = 0.7)
+#mutant_sample <- sample.split(mutant$alignment,SplitRatio = 0.7)
+other_sample <- sample.split(nonhuman$alignment,SplitRatio = 0.7)
+
+human_train = subset(human,human_sample==TRUE)
+ni_train = subset(ni,ni_sample==TRUE)
+#mutant_train = subset(mutant,mutant_sample==TRUE)
+other_train = subset(nonhuman,other_sample==TRUE)
+
+human_test = subset(human,human_sample==FALSE)
+ni_test = subset(ni,ni_sample==FALSE)
+#mutant_test = subset(mutant,mutant_sample==FALSE)
+other_test = subset(nonhuman,other_sample==FALSE)
+
+train = rbind(human_train,ni_train,other_train)#,neutral_train)
+test = rbind(human_test,ni_test,other_test)#,neutral_test)
+```
+
+```{r,warning=FALSE}
+dist2 = dist(superhero2)
+origin2 =hclust(dist2)
+hc2 <- cutree(origin2,3)
+table(hc2,superhero2$race)
+```
+
+```{r}
+tree2 = rpart(as.factor(race)~.,train)
+summary(tree2)
+rpart.plot::rpart.plot(tree2)
+
+tree.prediction2=predict(tree2,test,type='class')
+confusionMatrix(as.factor(test$race),as.factor(tree.prediction2))
+```
+
+##Classification: Marvel vs DC
+```{r}
+set.seed(1234)
+superhero3 <- superhero[!names(superhero)=="eye_color"]
+superhero3 <- superhero3[!names(superhero3)=="hair_color"]
+superhero3 <- superhero3[!names(superhero3)=="race"]
+ma <- superhero3[superhero3$publisher=="Marvel Comics",]
+dc <- superhero3[superhero3$publisher=="DC Comics",]
+
+ma_sample <- sample.split(ma$gender,SplitRatio = 0.7)
+dc_sample <- sample.split(dc$gender,SplitRatio = 0.7)
+
+ma_train = subset(ma,ma_sample==TRUE)
+dc_train = subset(dc,dc_sample==TRUE)
+
+ma_test = subset(ma,ma_sample==FALSE)
+dc_test = subset(dc,dc_sample==FALSE)
+
+train = rbind(ma_train,dc_train)
+test = rbind(ma_test,dc_test)
+```
+
+```{r,warning=FALSE}
+dist3 = dist(superhero3)
+origin3 =hclust(dist3)
+hc3 <- cutree(origin3,2)
+table(hc3,superhero2$publisher)
+```
+
+```{r}
+tree3 = rpart(as.factor(publisher)~.,train)
+summary(tree3)
+rpart.plot::rpart.plot(tree3)
+
+tree.prediction3=predict(tree3,test,type='class')
+confusionMatrix(as.factor(test$publisher),as.factor(tree.prediction3))
+```
+
+
+```{r}
+tree4 = rpart(as.factor(publisher)~gender+intelligence+strength+speed+durability+power+combat,train)
+summary(tree4)
+rpart.plot::rpart.plot(tree4)
+
+tree.prediction4=predict(tree4,test,type='class')
+confusionMatrix(as.factor(test$publisher),as.factor(tree.prediction4))
+```
+
+
+
+
+
+
+
+

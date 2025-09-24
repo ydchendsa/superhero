@@ -1,0 +1,163 @@
+---
+title: "Yudi_Chen_EDA"
+author: "Yudi Chen"
+date: "4/24/2022"
+output: html_document
+---
+```{r}
+library(fmsb)
+library(dplyr)
+library(tidyverse)
+library(viridis)
+#install.packages("patchwork")
+library(patchwork)
+#install.packages("hrbrthemes")
+library(hrbrthemes)
+#install.packages("colormap")
+library(colormap)
+library(ggplot2)
+library(ggpubr)
+library(plotly)
+```
+
+```{r}
+marvel = superhero[superhero$publisher=="Marvel Comics",]
+dc = superhero[superhero$publisher=="DC Comics",]
+
+list=list("intelligence","strength","speed","durability","power","combat")
+
+marvel=marvel[names(marvel) %in% list]
+dc = dc[names(dc) %in% list]
+
+marvel.mean = t(as.data.frame(sapply(marvel,mean)))
+dc.mean = t(as.data.frame(sapply(dc,mean)))
+
+mean = as.data.frame(rbind(marvel.mean,dc.mean))
+mean <- rbind(rep(80,10) , rep(0,10) , mean)
+```
+
+```{r}
+color_border = c(rgb(237/255, 29/255, 36/255),rgb(4/255, 118/255, 242/255))
+color_in = c(rgb(218/255, 87/255, 54/255),rgb(69/255, 142/255, 198/255))
+a = radarchart(
+  mean,axistype = 1,
+  pcol=color_border,
+  pfcol=scales::alpha(color_border, 0.3),
+  plwd=4,
+  plty=1,
+  cglcol="grey",
+  cglty=1,
+  axislabcol="grey",
+  caxislabels=seq(0,80,20),
+  cglwd=1.1,
+  vlcex=0.8
+)
+legend(x=0.9,y=1.25,legend=c("Marvel","DC"),bty="n",pch=20,col=color_border,text.col = "black",cex=0.9,pt.cex=1.6)
+```
+
+```{r}
+list1=list("intelligence","strength","speed","durability","power","combat","gender","publisher")
+superhero1=superhero[names(superhero) %in% list1]
+marvel_f = superhero1[superhero1$gender=="Female",] 
+marvel_f = marvel_f[marvel_f$publisher=="Marvel Comics",]
+marvel_m = superhero1[superhero1$gender=="Male" && superhero1$publisher=="Marvel Comics",]
+marvel_f = marvel_f[!names(marvel_f)=="publisher"&!names(marvel_f)=="gender"]
+marvel_m = marvel_m[!names(marvel_m)=="publisher"&!names(marvel_m)=="gender"]
+
+dc_f = superhero1[superhero1$gender=="Female" & superhero1$publisher=="DC Comics",]
+dc_f = dc_f[!names(dc_f)=="publisher"&!names(dc_f)=="gender"]
+dc_m = superhero1[superhero1$gender=="Male" & superhero1$publisher=="DC Comics",]
+dc_m = dc_m[!names(dc_m)=="publisher"&!names(dc_m)=="gender"]
+
+marvel.f.mean = t(as.data.frame(sapply(marvel_f,mean)))
+dc.f.mean = t(as.data.frame(sapply(dc_f,mean)))
+marvel.m.mean = t(as.data.frame(sapply(marvel_m,mean)))
+dc.m.mean = t(as.data.frame(sapply(dc_m,mean)))
+
+mean.f = as.data.frame(rbind(marvel.f.mean,dc.f.mean))
+mean.m = as.data.frame(rbind(marvel.m.mean,dc.m.mean))
+mean.marvel = as.data.frame(rbind(marvel.f.mean,marvel.m.mean))
+mean.dc = as.data.frame(rbind(dc.f.mean,dc.m.mean))
+```
+
+```{r}
+#female
+mean.f <- rbind(rep(80,10) , rep(0,10) , mean.f)
+b = radarchart(
+  mean.f,axistype = 1,
+  pcol=color_border,
+  pfcol=scales::alpha(color_border, 0.3),
+  plwd=4,
+  plty=1,
+  cglcol="grey",
+  cglty=1,
+  axislabcol="grey",
+  caxislabels=seq(0,80,20),
+  cglwd=1.1,
+  vlcex=0.8
+)
+legend(x=0.9,y=1.25,legend=c("Marvel","DC"),bty="n",pch=20,col=color_border,text.col = "black",cex=0.9,pt.cex=1.6)
+
+##male
+mean.m <- rbind(rep(80,10) , rep(0,10) , mean.m)
+
+c = radarchart(
+  mean.m,axistype = 1,
+  pcol=color_border,
+  pfcol=scales::alpha(color_border, 0.3),
+  plwd=4,
+  plty=1,
+  cglcol="grey",
+  cglty=1,
+  axislabcol="grey",
+  caxislabels=seq(0,80,20),
+  cglwd=1.1,
+  vlcex=0.8
+)
+legend(x=0.9,y=1.25,legend=c("Marvel","DC"),bty="n",pch=20,col=color_border,text.col = "black",cex=0.9,pt.cex=1.6)
+
+#marvel
+mean.marvel <- rbind(rep(80,10) , rep(0,10) , mean.marvel)
+
+d = radarchart(
+  mean.marvel,axistype = 1,
+  pcol=color_border,
+  pfcol=scales::alpha(color_border, 0.3),
+  plwd=4,
+  plty=1,
+  cglcol="grey",
+  cglty=1,
+  axislabcol="grey",
+  caxislabels=seq(0,80,20),
+  cglwd=1.1,
+  vlcex=0.8
+)
+legend(x=0.9,y=1.25,legend=c("Female","Male"),bty="n",pch=20,col=color_border,text.col = "black",cex=0.9,pt.cex=1.6)
+
+##dc
+mean.dc <- rbind(rep(80,10) , rep(0,10) , mean.dc)
+
+e = radarchart(
+  mean.dc,axistype = 1,
+  pcol=color_border,
+  pfcol=scales::alpha(color_border, 0.3),
+  plwd=4,
+  plty=1,
+  cglcol="grey",
+  cglty=1,
+  axislabcol="grey",
+  caxislabels=seq(0,80,20),
+  cglwd=1.1,
+  vlcex=0.8
+)
+legend(x=0.9,y=1.25,legend=c("Female","Male"),bty="n",pch=20,col=color_border,text.col = "black",cex=0.9,pt.cex=1.6)
+```
+
+```{r}
+ggarrange(b,c,d,f)
+```
+
+
+
+
+

@@ -1,0 +1,135 @@
+---
+title: "Untitled"
+author: "Hanjing Shi"
+date: '2022-04-24'
+output: html_document
+---
+
+```{r}
+full = read.csv("mdc_full.csv")
+mdc = read.csv("mdc_clean.csv")
+require(gridExtra)
+```
+```{r}
+library(dplyr)
+library(ggplot2)
+
+
+ 
+
+plot4 = full %>%
+ filter(Rating %in% c("PG-13", "R", "PG")) %>%
+ ggplot() +
+ aes(x = IMDB_Score, fill = Category, alpha=.5) +
+ geom_density(adjust = 1L) +
+ scale_fill_manual(values = c(DC = "#0476F2", 
+Marvel = "#FF3333")) +
+ labs(x = "IMDB Score", y = "Density", title = "MARVEL VS DC IMDB Scores", subtitle = "Movies", 
+ fill = "Publishers") +
+ theme(
+         panel.background = element_rect(fill='transparent'),
+         plot.background = element_rect(fill='transparent', color=NA),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         legend.background = element_rect(fill='transparent'),
+         legend.box.background = element_rect(fill='transparent')
+       )
+
+plot5 = ggplot(full) +
+ aes(x = IMDB_Score, fill = Category, alpha=.5) +
+ geom_density(adjust = 1L) +
+ scale_fill_manual(values = c(DC = "#0476F2", 
+Marvel = "#FF3333")) +
+ labs(x = "IMDB Score", y = "Density", title = "MARVEL VS DC IMDB Scores", subtitle = "TV shows and Movies", 
+ fill = "Publishers") +
+ theme(
+         panel.background = element_rect(fill='transparent'),
+         plot.background = element_rect(fill='transparent', color=NA),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         legend.background = element_rect(fill='transparent'),
+         legend.box.background = element_rect(fill='transparent')
+       )
+plot6 = grid.arrange(plot5, plot4,ncol = 2)
+```
+
+```{r}
+plot2 = full %>%
+ filter(Rating %in% c("PG-13", "R", "PG")) %>%
+ ggplot() +
+ aes(x = Category, y = IMDB_Score) +
+geom_boxplot(fill = "#112446") +
+ labs(x = "Publishers", 
+ y = "IMDB Score", title = "Marvel vs DC IMDB Score", subtitle = "Movies") +
+  scale_fill_manual(
+    values = c(DC = "#0934B0",
+    Marvel = "#EB3C34")
+  )+
+theme(
+         panel.background = element_rect(fill='transparent'),
+         plot.background = element_rect(fill='transparent', color=NA),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         legend.background = element_rect(fill='transparent'),
+         legend.box.background = element_rect(fill='transparent')
+       )
+plot(plot2)
+plot1 = ggplot(full) +
+ aes(x = Category, y = IMDB_Score) +
+ geom_boxplot(fill = "#0072B2") +
+ labs(x = "Publishers", 
+ y = "IMDB Score", title = "Marvel vs DC IMDB Score", subtitle = "TV Shows and Movies") +
+  scale_fill_manual(
+    values = c(DC = "#0934B0",
+    Marvel = "#EB3C34")
+  )+
+ theme(
+         panel.background = element_rect(fill='transparent'),
+         plot.background = element_rect(fill='transparent', color=NA),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         legend.background = element_rect(fill='transparent'),
+         legend.box.background = element_rect(fill='transparent')
+       )
+
+plot3 = grid.arrange(plot1, plot2,ncol = 2)
+png("FULLIMDB.png")
+print(plot3)
+dev.off()
+
+```
+
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+full %>%
+ filter(!(Rating %in% c("", "Not Rated"))) %>%
+ ggplot() +
+ aes(x = Rating, fill = Category ) +
+ geom_bar(position = "dodge") +
+ scale_fill_hue(direction = 1) +
+ labs(x = "Publishers", y = "Count", title = "MARVEL VS DC MPA Rating", subtitle = "TV shows and Movies") +
+ scale_fill_manual(
+    values = c(DC = "#0476F2", 
+Marvel = "#FF3333")
+  ) +
+ coord_flip() +
+  theme(
+         panel.background = element_rect(fill='transparent'),
+         plot.background = element_rect(fill='transparent', color=NA),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         legend.background = element_rect(fill='transparent'),
+         legend.box.background = element_rect(fill='transparent')
+       )
+
+```
+
+
+
+```{r}
+#esquisse::esquisser()
+```
+

@@ -1,0 +1,36 @@
+
+```{r}
+library(stringr)
+library(readr)
+library(tidyverse)
+library(dplyr)
+```
+
+
+```{r}
+# upload data
+data <- read_csv("mdc.csv")
+boxoffice <- read_tsv('boxofficemojointernationaltop1000.tsv')
+boxoffice <- rename(boxoffice,c(title="Title"))
+```
+
+```{r}
+# remove redundant variables
+data <- data[,-19]
+boxoffice <-boxoffice[, -c(1,8)]
+head(data)
+head(boxoffice)
+```
+
+```{r}
+# join two dataframe by name
+data1 <- left_join(data, boxoffice, by = "title")
+```
+
+```{r}
+# save
+write.table (data1, file ="mdc_clean.csv", sep = ",", row.names =FALSE)
+```
+
+
+

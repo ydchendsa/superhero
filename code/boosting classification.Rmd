@@ -1,0 +1,90 @@
+```{r}
+library(stringr)
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(PupillometryR)
+library(randomForest)
+library(gbm)
+library(caret)
+library(Matrix)
+library(cvms)
+```
+
+
+```{r}
+# upload data
+data <- read_csv("mdc_clean1.csv")
+head(data)
+```
+
+
+```{r}
+# remove redundant variables
+data1 <- data[,c(20, 6, 8, 9, 16, 17, 18, 19, 22, 24)]
+# set marvel mocie as 0, and dc movie as 1
+data1$entity[data1$entity == "MARVEL"] <- 0
+data1$entity[data1$entity == "DC"] <- 1
+head(data1)
+```
+
+```{r}
+# classification - boosting
+set.seed(1234)
+model <- gbm(entity~.,data=data1,shrinkage=0.01,      
+             distribution='bernoulli',cv.folds=5, 
+             n.trees=3000,verbose=F) 
+# use cross-validation choose best number of iterations
+best.iter <- gbm.perf(model,method='cv')
+# check relative influence of variables
+summary(model, best.iter)
+```
+
+```{r}
+# use 5-fold cross-validation check the accuracy
+set.seed(3)
+fitControl <- trainControl(method = "cv",
+                           number = 5,
+                           returnResamp = "all")
+model2 <- train(entity~.,data=data1,
+                method='gbm',
+                distribution='bernoulli',
+                trControl = fitControl,
+                verbose=F,tuneGrid = data.frame(.n.trees=best.iter,.shrinkage=0.01,.interaction.depth=1, .n.minobsinnode= 0))
+model2
+```
+
+```{r}
+# predict
+p <- predict(model2, data1)
+table <- table(as.factor(p), as.factor(data1$entity))
+# confusion matrix
+(c_mat_P <- confusionMatrix(table))
+c_matDF_P <- as.data.frame(c_mat_P$table)
+c_matDF_P$Var1 <- c("MARVEL", "DC", "MARVEL", "DC")
+c_matDF_P$Var2 <- c("MARVEL", "MARVEL", "DC", "DC")
+
+# plot 
+
+plot_confusion_matrix(c_matDF_P, 
+                      target_col = "Var2", prediction_col = "Var1", counts_col = "Freq",
+                      add_row_percentages = TRUE,
+                      add_col_percentages = TRUE,
+                      rm_zero_percentages = FALSE,
+                      rm_zero_text = FALSE,
+                      add_zero_shading = TRUE,
+                      counts_on_top = TRUE,
+                      palette = "Blues",
+  theme_fn = ggplot2::theme_light)
+
+```
+
+
+
+
+
+
+
+
+
